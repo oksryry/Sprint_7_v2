@@ -8,7 +8,7 @@ import static io.restassured.RestAssured.given;
 
 public class CreateOrder { //создаем заказ без цвета самоката (т.к. это поле не обязательное)
 
-    private static final String ORDER_CREATE_URL = "/api/v1/orders";
+    private static final String ORDERS_URL = "/api/v1/orders";
 
     @Step("Create minimal order - without colour")
     public Response createNewOrder(Order order) {
@@ -16,6 +16,12 @@ public class CreateOrder { //создаем заказ без цвета сам�
                         .header("Content-type", "application/json")
                         .body(order)
                         .when()
-                        .post(ORDER_CREATE_URL);
+                        .post(ORDERS_URL);
+    }
+
+    @Step("Get list of all existing orders")
+    public Response getAllOrders() {
+        return given()
+                .get(ORDERS_URL);
     }
 }

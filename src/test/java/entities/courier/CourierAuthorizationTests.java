@@ -1,16 +1,17 @@
 package entities.courier;
 
+import com.github.javafaker.Faker;
 import entities.Courier;
 import entities.CourierCreds;
-import entities.courierIdInLoginResponse;
+import entities.CourierIdInLoginResponse;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import utils.CourierParametersSetting;
+import utils.Rules;
+
+import java.util.Locale;
 
 import static entities.CourierCreds.getCourierCreds;
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -23,12 +24,16 @@ public class CourierAuthorizationTests {
     private Courier courier = courierParametersSetting.setParameters();
     private int id;
 
+
+    @Rule
+    public final Rules rule = new Rules();
+
     @Before
     public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
+        courier = courierParametersSetting.setParameters();
     }
 
-    @Step("Create courier for authorization test")
+    @Step("Create courier for authorization test") // Создаем курьера в начале теста
     public void createCourierForAuthorizationTest() {
         courierUser.createCourier(courier);
     }
@@ -39,53 +44,63 @@ public class CourierAuthorizationTests {
         return response;
     }
 
-    @Step("Return authorization status Code")
-    public int courierAuthorizationStatusCode() {
-        int code = courierAuthorization().statusCode();
-        return code;
-    }
-
-    @Step("Compare authorization response to expected response")
-    public void checkResponse(int status, int code) {
-        Assert.assertEquals( 200, courierAuthorizationStatusCode());
-    }
-
-
     @Test //проверка, что курьер может авторизоваться
-    @Step("Check if courier with valid creds can be logged in - must be status code 200")
+    @DisplayName("Successful authorization returns 200 status code")
     public void courierSuccessfulAuthorization() {
         createCourierForAuthorizationTest();
         courierAuthorization();
-        checkResponse(200, courierAuthorization().statusCode());
-
-
-
-
-
+        Assert.assertEquals(200, courierAuthorization().statusCode());
     }
+
+
 
     @Test //проверка, что успешный запрос возвращает id
-    @Step("Check if successful log in returns courier's id")
+    @DisplayName("Check if successful authorization returns courier's id")
     public void courierLoginIdResponse() {
-        courierUser.createCourier(courier);
-        Response courierAuthorizationResponse = courierUser.courierAuthorization(getCourierCreds(courier));
-        courierAuthorizationResponse.then().body("id", notNullValue());
-
+        createCourierForAuthorizationTest();
+        id = courierUser.courierAuthorization(getCourierCreds(courier))
+                .as(CourierIdInLoginResponse.class).getId();
+        courierAuthorization()
+                .then()
+                    .body("id", notNullValue());
     }
+
 
     @Test //если авторизоваться под несуществующим пользователем, запрос возвращает ошибку
-    @Step("Check if log in with invalid creds returns 404 No such user found")
+    @DisplayName("Authorization with invalid creds returns 404")
     public void courierIncorrectLoginResponse() {
-        Response courierIncorrectLoginResponse = courierUser.courierAuthorization(getCourierCreds(courier));
-        courierIncorrectLoginResponse.then().body("message", equalTo("Учетная запись не найдена"))
-                .and()
-                .statusCode(404);
-
+        generateFakeCourier();
+        authorizeWithFakeCredentials()
+                .then()
+                    .assertThat()
+                    .statusCode(404)
+                    .body("message", equalTo("Учетная запись не найдена"));
     }
 
-    @After
-    public void tearDown() {
-        id = courierUser.courierAuthorization(CourierCreds.getCourierCreds(courier)).as(courierIdInLoginResponse.class).getId();
+    @Step("Generate fake courier - with fake credentials to log in")
+    private Courier generateFakeCourier() {
+        Faker faker = new Faker();
+        Faker fakerRU = new Faker(Locale.forLanguageTag("ru"));
+        String invLogin = faker.bothify("????####");
+        String invPassword = faker.bothify("????####");
+        String invFirstName = fakerRU.name().firstName();
+        Courier invalidCourier = new Courier(invLogin, invPassword, invFirstName);
+        return invalidCourier;
+    }
+
+    @Step("Log in with fake courier/fake credentials")
+    private Response authorizeWithFakeCredentials()
+    {
+        Response response = courierUser.courierAuthorization(
+                new CourierCreds(generateFakeCourier().getLogin(), generateFakeCourier().getPassword()));
+        return response;
+    }
+
+    @Step("Delete created courier after test")
+    private void deleteCourier() {
+        id = courierUser.courierAuthorization(CourierCreds.getCourierCreds(courier)).as(CourierIdInLoginResponse.class).getId();
         courierUser.deleteCourier(id);
     }
+
+
 }

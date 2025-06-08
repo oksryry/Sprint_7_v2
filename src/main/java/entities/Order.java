@@ -1,5 +1,8 @@
 package entities;
 
+import lombok.Getter;
+import lombok.Setter;
+
 public class Order {
 
     private String firstName;
@@ -10,6 +13,7 @@ public class Order {
     private int rentTime;
     private String deliveryDate;
     private String comment;
+//    @Getter @Setter
     private String[] color;
 
     public String[] getColor() {

@@ -42,4 +42,22 @@ public class CourierUser {
                 .delete(COURIER_BASE_URL + ":" + id);
     }
 
+    @Step("Create Courier without one necessary parameter - login/password")
+    public Response createCourierParams(String requestBody) {
+        return given()
+                .header("Content-type", "application/json")
+                .body(requestBody)
+                .when()
+                .post(COURIER_BASE_URL);
+    }
+
+    @Step("Authorize without one necessary parameter - login/password")
+    public Response autorizeCourierParams(String requestAuthorizeBody) {
+        return given()
+                .header("Content-type", "application/json")
+                .body(requestAuthorizeBody)
+                .when()
+                .post(COURIER_AUTHORIZATION_BASE_URL);
+    }
+
 }

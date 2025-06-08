@@ -1,37 +1,41 @@
 package entities;
 
+import io.restassured.response.Response;
+import lombok.Getter;
+import lombok.Setter;
+
+import static io.restassured.RestAssured.given;
+
+@Getter @Setter
 public class Courier {
+
+
 
     private String login;
     private String password;
     private String firstName;
 
-    public String getLogin() {
-        return login;
-    }
+    private static final String COURIER_BASE_URL = "/api/v1/courier/";
 
-    public Courier setLogin(String login) {
+    public Courier() {};
+
+    public Courier(String login, String password, String firstName) {
         this.login = login;
-        return this;
-    }
-
-    public String getPassword() {
-        return password;
-    }
-
-    public Courier setPassword(String password) {
         this.password = password;
-        return this;
-    }
-
-    public String getFirstName() {
-        return firstName;
-    }
-
-    public Courier setFirstName(String firstName) {
         this.firstName = firstName;
-        return this;
     }
+
+
+
+
+    //сделаем метод с созданием курьера здесь, чтобы потом использовать этот метод в тестовом классе
+//    public Response createCourier(String login, String password, String firstName) {
+//    return given()
+//            .header("Content-type", "application/json")
+//            .body(String login, String password, String firstName)
+//            .when()
+//            .post(COURIER_BASE_URL);
+//    }
 
 
 }

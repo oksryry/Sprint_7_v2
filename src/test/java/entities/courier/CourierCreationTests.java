@@ -2,15 +2,13 @@ package entities.courier;
 
 import entities.Courier;
 import entities.CourierCreds;
-import entities.courierIdInLoginResponse;
+import entities.CourierIdInLoginResponse;
 import io.qameta.allure.Step;
-import io.restassured.RestAssured;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.*;
 import utils.CourierParametersSetting;
+import utils.Rules;
 
 import static org.apache.hc.core5.http.HttpStatus.SC_CONFLICT;
 import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
@@ -27,41 +25,45 @@ public class CourierCreationTests {
 
 
 
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
+    @Rule
+    public final Rules rule = new Rules();
+
+    @Step("Create courier")
+    private Response createCourierForCreationTests() {
+        Response response = courierUser.createCourier(courier);
+        return response;
     }
+
 
 
 
     @Test //курьера можно создать; запрос вернул правильный код ответа
-    @Step("Check creation of Courier method - status Code 201 must be returned")
+    @DisplayName("Check creation of Courier method - status Code 201 must be returned")
     public void createCourier() {
-        Response response = courierUser.createCourier(courier);
-        Assert.assertEquals("Курьер успешно создан", SC_CREATED, response.statusCode());
+        Assert.assertEquals("Курьер успешно создан", SC_CREATED, createCourierForCreationTests().statusCode());
     }
 
     @Test //поверяем, что нельзя создать двух одинаковых курьеров
-    @Step("Check creation of the same Couriers - must be no opportunity to do this")
+    @DisplayName("Check creation of the same Couriers - must be no opportunity to do this")
     public void createTheSameCourier() {
-        courierUser.createCourier(courier);
-        Response response = courierUser.createCourier(courier);
-        Assert.assertEquals("Курьер с такими данными создан с системе ранее", SC_CONFLICT, response.statusCode());
+        createCourierForCreationTests();
+        createCourierForCreationTests();
+        Assert.assertEquals("Курьер с такими данными создан с системе ранее", SC_CONFLICT, createCourierForCreationTests().statusCode());
 
 
     }
 
     @Test //успешный запрос возвращает ok: true;
-    @Step("Check creation of Courier method - response must be TRUE")
+    @DisplayName("Check creation of Courier method - response must be TRUE")
     public void checkCourierCreationResponse() {
-        Response response = courierUser.createCourier(courier);
-        response.then()
-                .body("ok", equalTo(true));
+        createCourierForCreationTests()
+                .then()
+                    .body("ok", equalTo(true));
     }
 
     @After
     public void tearDown() {
-        id = courierUser.courierAuthorization(CourierCreds.getCourierCreds(courier)).as(courierIdInLoginResponse.class).getId();
+        id = courierUser.courierAuthorization(CourierCreds.getCourierCreds(courier)).as(CourierIdInLoginResponse.class).getId();
         courierUser.deleteCourier(id);
     }
 

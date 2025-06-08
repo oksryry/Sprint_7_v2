@@ -1,14 +1,14 @@
 package entities.order;
 
 import entities.Order;
-import io.qameta.allure.Step;
-import io.restassured.RestAssured;
+import io.qameta.allure.junit4.DisplayName;
 import io.restassured.response.Response;
-import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import utils.OrderObligatoryFieldsSetting;
+import utils.Rules;
 import java.util.Arrays;
 import java.util.Collection;
 import static org.apache.hc.core5.http.HttpStatus.SC_CREATED;
@@ -33,11 +33,8 @@ public class OrderCreationTest {
     }
 
 
-
-    @Before
-    public void setUp() {
-        RestAssured.baseURI = "https://qa-scooter.praktikum-services.ru";
-    }
+    @Rule
+    public final Rules rule = new Rules();
 
     @Parameterized.Parameters(name = "{index}: При наборе параметров цвета {0}")
     public static Collection<Object[]> coloursParameters() {
@@ -53,7 +50,7 @@ public class OrderCreationTest {
     //можно указать оба цвета;
     //можно совсем не указывать цвет;
     //тело ответа содержит track.
-    @Step("Check if it is possible to place an order with different values or null value in colour")
+    @DisplayName("Check if it is possible to place an order with different values or null value in colour")
     public void orderWithDifferentColours() {
         Order fullOrder = orderWithMinFields.setColor(colours);
         Response response = createOrder.createNewOrder(fullOrder);
